@@ -25,8 +25,9 @@ const (
 )
 
 var (
-	errNoZone  = errors.New("zone ID not set")
-	errNoToken = errors.New("token not set")
+	errNoZone       = errors.New("zone ID not set")
+	errZoneTooShort = errors.New("zone ID must be 32 characters long")
+	errNoToken      = errors.New("token not set")
 )
 
 func newCloudflare(baseEndpoint, token string) *cloudflare {
@@ -74,6 +75,10 @@ func (c *cloudflare) clearCache(zone string) error {
 		return errNoZone
 	}
 
+	if len(zone) != 32 {
+		return errZoneTooShort
+	}
+
 	base := c.baseEndpoint
 	if base == "" {
 		base = defaultCloudflareEndpoint
@@ -114,6 +119,7 @@ func (c *cloudflare) clearCache(zone string) error {
 		return &requestError{endpoint: endpoint, statusCode: res.StatusCode}
 	}
 
+	fmt.Fprintln(os.Stdout, "Cache deleted for zone:", zone)
 	return nil
 }
 
@@ -140,6 +146,8 @@ func (a *requestError) Error() string {
 		reason = "token is not authorized to perform the action, token needs permission \"Zone > Cache Purge\""
 	case http.StatusForbidden:
 		reason = "invalid token provided: token is incorrect or no longer valid"
+	case http.StatusBadRequest:
+		reason = "Cloudflare rejected the request since it's malformed, most likely the Zone ID is incorrect"
 	default:
 		reason = fmt.Sprintf("%d %s", a.statusCode, http.StatusText(a.statusCode))
 	}

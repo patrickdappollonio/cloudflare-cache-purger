@@ -1,0 +1,39 @@
+name: Release
+on: push
+
+jobs:
+  release-latest:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v2.0.0
+
+      - name: Release latest
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: patrickdappollonio/cloudflare-cache-purger
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          tags: latest
+
+  release-version:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags')
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v2.0.0
+
+      - name: Get the version
+        id: get_version
+        if: github.ref != 'refs/heads/master'
+        run: |
+          echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+
+      - name: Release latest
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: patrickdappollonio/cloudflare-cache-purger
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          tags: ${{ steps.get_version.outputs.VERSION }}

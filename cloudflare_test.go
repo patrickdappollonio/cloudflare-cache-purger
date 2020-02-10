@@ -78,6 +78,12 @@ func TestCloudflareCacheClear(t *testing.T) {
 			err:   errNoZone,
 		},
 		{
+			name:  "zone id less than 32 characters",
+			zone:  "thisislessthan32chars",
+			token: goodToken,
+			err:   errZoneTooShort,
+		},
+		{
 			name:  "fake token",
 			zone:  goodZoneID,
 			token: "my-fake-token",
@@ -85,7 +91,7 @@ func TestCloudflareCacheClear(t *testing.T) {
 		},
 		{
 			name:  "unknown zone",
-			zone:  "my-fake-zone",
+			zone:  "C63R6bm5uyGyv2skaSbj2YmvrJXmgjS3",
 			token: goodToken,
 			err:   &requestError{statusCode: http.StatusNotFound},
 		},
@@ -96,7 +102,6 @@ func TestCloudflareCacheClear(t *testing.T) {
 			clf := newCloudflare(srv.URL+"/", v.token)
 
 			err := clf.clearCache(v.zone)
-
 			if err != nil {
 				if fmt.Sprintf("%T", err) != fmt.Sprintf("%T", v.err) {
 					tt.Fatalf("expecting error to be of type %T, but got %T: %s", v.err, err, err.Error())
@@ -115,5 +120,4 @@ func TestCloudflareCacheClear(t *testing.T) {
 			}
 		})
 	}
-
 }
