@@ -10,7 +10,7 @@ jobs:
       - name: Compile and release for Linux amd64
         uses: ngs/go-release.action@v1.0.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           GOARCH: amd64
           GOOS: linux
 
@@ -22,7 +22,7 @@ jobs:
       - name: Compile and release for Darwin amd64
         uses: ngs/go-release.action@v1.0.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           GOARCH: amd64
           GOOS: darwin
 
@@ -34,6 +34,6 @@ jobs:
       - name: Compile and release for Windows amd64
         uses: ngs/go-release.action@v1.0.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           GOARCH: amd64
           GOOS: windows

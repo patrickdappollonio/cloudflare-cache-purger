@@ -37,9 +37,10 @@ it somewhere for the setup.
 
 ## Usage
 
-Grab one of the binaries from the [releases page](/releases) and put it
-somewhere in your `$PATH` (or the equivalent in Windows). Additionally, you can
-use the Docker image released at `patrickdappollonio/cloudflare-cache-purger`.
+Grab one of the binaries from the [releases page](https://github.com/patrickdappollonio/cloudflare-cache-purger/releases)
+and put it somewhere in your `$PATH` (or the equivalent in Windows).
+Additionally, you can use the Docker image released at
+`patrickdappollonio/cloudflare-cache-purger`.
 
 In both cases, configuration is provided via environment variables:
 
