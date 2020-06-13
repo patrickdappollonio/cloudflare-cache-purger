@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/patrickdappollonio/cloudflare-cache-purger/cloudflare"
 )
 
 func main() {
@@ -25,8 +27,8 @@ func run() error {
 
 	debug := os.Getenv("DEBUG") != ""
 
-	cl := newCloudflare(defaultCloudflareEndpoint, cloudflareToken)
-	cl.debug(debug)
+	cl := cloudflare.New(cloudflareToken)
+	cl.SetDebug(debug)
 
-	return cl.clearCache(cloudflareZone)
+	return cl.Clear(cloudflareZone)
 }

@@ -1,4 +1,4 @@
-package main
+package cloudflare
 
 import (
 	"fmt"
@@ -69,46 +69,47 @@ func TestCloudflareCacheClear(t *testing.T) {
 			name:  "empty token",
 			zone:  goodZoneID,
 			token: "",
-			err:   errNoToken,
+			err:   ErrNoToken,
 		},
 		{
 			name:  "empty zone",
 			zone:  "",
 			token: goodToken,
-			err:   errNoZone,
+			err:   ErrNoZone,
 		},
 		{
 			name:  "zone id less than 32 characters",
 			zone:  "thisislessthan32chars",
 			token: goodToken,
-			err:   errZoneTooShort,
+			err:   ErrZoneTooShort,
 		},
 		{
 			name:  "fake token",
 			zone:  goodZoneID,
 			token: "my-fake-token",
-			err:   &requestError{statusCode: http.StatusUnauthorized},
+			err:   &HTTPStatusCodeError{statusCode: http.StatusUnauthorized},
 		},
 		{
 			name:  "unknown zone",
 			zone:  "C63R6bm5uyGyv2skaSbj2YmvrJXmgjS3",
 			token: goodToken,
-			err:   &requestError{statusCode: http.StatusNotFound},
+			err:   &HTTPStatusCodeError{statusCode: http.StatusNotFound},
 		},
 	}
 
 	for _, v := range cases {
 		t.Run(v.name, func(tt *testing.T) {
-			clf := newCloudflare(srv.URL+"/", v.token)
+			clf := New(v.token)
+			clf.SetEndpoint(srv.URL + "/")
 
-			err := clf.clearCache(v.zone)
+			err := clf.Clear(v.zone)
 			if err != nil {
 				if fmt.Sprintf("%T", err) != fmt.Sprintf("%T", v.err) {
 					tt.Fatalf("expecting error to be of type %T, but got %T: %s", v.err, err, err.Error())
 				}
 
-				e1, m1 := err.(*requestError)
-				e2, m2 := v.err.(*requestError)
+				e1, m1 := err.(*HTTPStatusCodeError)
+				e2, m2 := v.err.(*HTTPStatusCodeError)
 
 				if m1 && m2 && e1.statusCode != e2.statusCode {
 					tt.Fatalf("expecting status code on error to be %d, got %d", e2.statusCode, e1.statusCode)

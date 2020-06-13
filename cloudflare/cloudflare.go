@@ -1,4 +1,4 @@
-package main
+package cloudflare
 
 import (
 	"errors"
@@ -12,28 +12,35 @@ import (
 	"time"
 )
 
-type cloudflare struct {
+// Cache is the cache object that holds communication
+// procedures against the Cloudflare Cache API
+type Cache struct {
 	baseEndpoint string
 	token        string
 	client       *http.Client
 	logger       *log.Logger
 }
 
-const (
-	defaultCloudflareEndpoint = "https://api.cloudflare.com/"
-	cacheEndpointFormat       = "client/v4/zones/%s/purge_cache"
-)
+// DefaultEndpoint holds the default endpoint
+const DefaultEndpoint = "https://api.cloudflare.com/"
+
+const cacheEndpointFormat = "client/v4/zones/%s/purge_cache"
 
 var (
-	errNoZone       = errors.New("zone ID not set")
-	errZoneTooShort = errors.New("zone ID must be 32 characters long")
-	errNoToken      = errors.New("token not set")
+	// ErrNoZone is returned when no zone ID is specified
+	ErrNoZone = errors.New("zone ID not set")
+
+	// ErrZoneTooShort is returned when the zone ID provided is too short
+	ErrZoneTooShort = errors.New("zone ID must be 32 characters long")
+
+	// ErrNoToken is returned when there's no token specified
+	ErrNoToken = errors.New("token not set")
 )
 
-func newCloudflare(baseEndpoint, token string) *cloudflare {
-	return &cloudflare{
-		baseEndpoint: baseEndpoint,
-		token:        token,
+// New creates a new Cloudflare cache clear object
+func New(token string) *Cache {
+	return &Cache{
+		token: token,
 		client: &http.Client{
 			Timeout: 5 * time.Second,
 			Transport: &http.Transport{
@@ -46,7 +53,14 @@ func newCloudflare(baseEndpoint, token string) *cloudflare {
 	}
 }
 
-func (c *cloudflare) debug(debug bool) {
+// SetEndpoint allows you to change the default endpoint
+// for Cloudflare (set with DefaultEndpoint) to any other
+func (c *Cache) SetEndpoint(endpoint string) {
+	c.baseEndpoint = endpoint
+}
+
+// SetDebug enables debug information
+func (c *Cache) SetDebug(debug bool) {
 	if debug {
 		c.logger = log.New(os.Stdout, "", log.LstdFlags)
 	} else {
@@ -54,13 +68,13 @@ func (c *cloudflare) debug(debug bool) {
 	}
 }
 
-func (c *cloudflare) log(format string, args ...interface{}) {
+func (c *Cache) log(format string, args ...interface{}) {
 	if c.logger != nil {
 		c.logger.Printf(format, args...)
 	}
 }
 
-func (c *cloudflare) logIf(a func() string) {
+func (c *Cache) logIf(a func() string) {
 	if c.logger == nil {
 		return
 	}
@@ -70,22 +84,24 @@ func (c *cloudflare) logIf(a func() string) {
 	}
 }
 
-func (c *cloudflare) clearCache(zone string) error {
+// Clear clears the cache by making the request to the Cloudflare
+// API and issuing a request to delete them
+func (c *Cache) Clear(zone string) error {
 	if zone == "" {
-		return errNoZone
+		return ErrNoZone
 	}
 
 	if len(zone) != 32 {
-		return errZoneTooShort
+		return ErrZoneTooShort
 	}
 
 	base := c.baseEndpoint
 	if base == "" {
-		base = defaultCloudflareEndpoint
+		base = DefaultEndpoint
 	}
 
 	if c.token == "" {
-		return errNoToken
+		return ErrNoToken
 	}
 
 	endpoint := fmt.Sprintf(base+cacheEndpointFormat, zone)
@@ -93,7 +109,7 @@ func (c *cloudflare) clearCache(zone string) error {
 
 	req, err := http.NewRequest(http.MethodPost, endpoint, strings.NewReader(`{"purge_everything":true}`))
 	if err != nil {
-		return &reqresError{kind: "build request", endpoint: endpoint, original: err}
+		return &HTTPClientError{kind: "build request", endpoint: endpoint, original: err}
 	}
 
 	req.Header.Set("Authorization", "Bearer "+c.token)
@@ -106,7 +122,7 @@ func (c *cloudflare) clearCache(zone string) error {
 
 	res, err := c.client.Do(req)
 	if err != nil {
-		return &reqresError{kind: "execute request", endpoint: endpoint, original: err}
+		return &HTTPClientError{kind: "execute request", endpoint: endpoint, original: err}
 	}
 
 	c.logIf(func() string {
@@ -116,29 +132,34 @@ func (c *cloudflare) clearCache(zone string) error {
 
 	if res.StatusCode != http.StatusOK {
 		c.log("Status code for request isn't 200, got: %d %s", res.StatusCode, res.Status)
-		return &requestError{endpoint: endpoint, statusCode: res.StatusCode}
+		return &HTTPStatusCodeError{endpoint: endpoint, statusCode: res.StatusCode}
 	}
 
 	fmt.Fprintln(os.Stdout, "Cache deleted for zone:", zone)
 	return nil
 }
 
-type reqresError struct {
+// HTTPClientError encapsulates any unexpected error message sent by
+// the Cloudflare API
+type HTTPClientError struct {
 	original error
 	endpoint string
 	kind     string
 }
 
-func (rr *reqresError) Error() string {
+// Error implements the error interface
+func (rr *HTTPClientError) Error() string {
 	return fmt.Sprintf("unable to %s to %q: %s", rr.kind, rr.endpoint, rr.original.Error())
 }
 
-type requestError struct {
+// HTTPStatusCodeError encapsulates an incorrect HTTP status code
+// returned by the Cloudflare API
+type HTTPStatusCodeError struct {
 	endpoint   string
 	statusCode int
 }
 
-func (a *requestError) Error() string {
+func (a *HTTPStatusCodeError) Error() string {
 	var reason string
 
 	switch a.statusCode {
