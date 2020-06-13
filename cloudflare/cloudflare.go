@@ -3,6 +3,7 @@ package cloudflare
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -66,6 +67,16 @@ func (c *Cache) SetDebug(debug bool) {
 	} else {
 		c.logger = nil
 	}
+}
+
+// SetDebugOutput allows to redirect the output of the cache
+// purger to another destination other than stdout
+func (c *Cache) SetDebugOutput(w io.Writer) {
+	if c.logger == nil {
+		return
+	}
+
+	c.logger.SetOutput(w)
 }
 
 func (c *Cache) log(format string, args ...interface{}) {
