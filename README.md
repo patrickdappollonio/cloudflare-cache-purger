@@ -13,7 +13,7 @@ section and click in the "Create Token" button. There, define the following:
     `cache-purger` or similar.
 * *Permissions:* In the dropdown for "Account" select "Zone". Then, the next
     dropdown right next to "Zone", select "Cache Purge", and finally, on the
-    last dropdown select "Edit". This will allow the token only to Purge Caches
+    last dropdown select "Purge". This will allow the token only to Purge Caches
     on Zones. If the token happens to be leaked, the worst thing an attacker
     could do is simply delete your cache.
 * *Zones:* Here you need to decide: do you want the token to be used on all
