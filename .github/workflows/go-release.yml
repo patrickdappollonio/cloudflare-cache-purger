@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
-        uses: actions/checkout@v2.3.5
+        uses: actions/checkout@v2.7.0
       - name: Compile and release for Linux amd64
         uses: ngs/go-release.action@v1.0.1
         env:
@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
-        uses: actions/checkout@v2.3.5
+        uses: actions/checkout@v2.7.0
       - name: Compile and release for Darwin amd64
         uses: ngs/go-release.action@v1.0.1
         env:
@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repository
-        uses: actions/checkout@v2.3.5
+        uses: actions/checkout@v2.7.0
       - name: Compile and release for Windows amd64
         uses: ngs/go-release.action@v1.0.1
         env:
